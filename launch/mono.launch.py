@@ -13,7 +13,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'sensor_id',
-            default_value=0,
+            default_value='0',  # Changed from integer 0 to string '0'
             description='Sensor ID for the camera (0 or 1)'
         ),
         DeclareLaunchArgument(
