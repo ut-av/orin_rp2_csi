@@ -1,0 +1,4 @@
+mono_processor:
+  ros__parameters:
+    sensor_id: 0
+    display_mode: "none"

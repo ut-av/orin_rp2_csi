@@ -34,7 +34,7 @@ install(TARGETS
 )
 
 install(DIRECTORY
-  launch params data
+  launch params calibration
   DESTINATION share/${PROJECT_NAME}
 )
 

@@ -22,7 +22,7 @@ StereoProcessor::StereoProcessor() : Node("stereo_processor")
     try {
         std::string pkg_path = ament_index_cpp::get_package_share_directory("orin_rp2_csi");
         std::string calib_file = "stereo_calib.yml";  // Adjust filename as needed
-        if (!load_calibration(pkg_path + "/data/" + calib_file)) {
+        if (!load_calibration(pkg_path + "/calibration/" + calib_file)) {
             RCLCPP_WARN(this->get_logger(), "Calibration file not found, using default parameters");
         }
     } catch (const std::exception& e) {

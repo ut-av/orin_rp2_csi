@@ -12,6 +12,7 @@ class MonoProcessor : public rclcpp::Node
 {
 public:
   MonoProcessor();
+  void init();
 
 private:
   void capture_and_process();
@@ -24,4 +25,5 @@ private:
   cv::Mat dist_coeffs_;
   image_transport::Publisher pub_image_;
   rclcpp::TimerBase::SharedPtr timer_;
+  std::string display_mode_;
 };
