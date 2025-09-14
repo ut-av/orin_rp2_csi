@@ -1,0 +1,3 @@
+stereo_processor:
+  ros__parameters:
+    calibration_file: "stereo_calibration.yml"
