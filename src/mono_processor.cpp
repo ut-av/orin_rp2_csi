@@ -66,11 +66,7 @@ void MonoProcessor::capture_and_process()
     cap_ >> image_;
 
     if (!image_.empty() && image_.cols > 0 && image_.rows > 0) {
-        cv::Mat resized_image;
-        cv::resize(image_, resized_image, cv::Size(640, 480)); // Adjust size as needed
-        cv::namedWindow("Mono Feed", cv::WINDOW_AUTOSIZE);
-        cv::imshow("Mono Feed", resized_image);
-        cv::waitKey(1);
+        process_mono();
     } else {
         RCLCPP_ERROR(this->get_logger(), "Captured image is invalid or empty");
     }
@@ -98,4 +94,12 @@ void MonoProcessor::process_mono()
     }
     sensor_msgs::msg::Image::SharedPtr msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", rectified).toImageMsg();
     pub_image_.publish(msg);
+
+    if (display_mode_ != "none") {
+        cv::Mat resized_image;
+        cv::resize(image_, resized_image, cv::Size(640, 480)); // Adjust size as needed
+        cv::namedWindow("Mono Feed", cv::WINDOW_AUTOSIZE);
+        cv::imshow("Mono Feed", resized_image);
+        cv::waitKey(1);
+    }
 }
