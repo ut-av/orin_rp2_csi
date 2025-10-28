@@ -24,8 +24,8 @@ MonoProcessor::MonoProcessor() : Node("mono_processor")
     std::string sensor_id = std::to_string(sensor_id_int);
 
     // Add parameters for resolution
-    this->declare_parameter<int>("width", 1920);
-    this->declare_parameter<int>("height", 1080);
+    this->declare_parameter<int>("width", 320);
+    this->declare_parameter<int>("height", 240);
     this->declare_parameter<int>("framerate", 30);
     
     int width = this->get_parameter("width").as_int();
