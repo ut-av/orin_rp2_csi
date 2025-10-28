@@ -21,11 +21,11 @@ find_package(OpenCV REQUIRED QUIET)
 
 # Add mono_processor executable
 add_executable(mono_processor src/mono_node.cpp src/mono_processor.cpp)
-ament_target_dependencies(mono_processor rclcpp cv_bridge image_transport sensor_msgs std_msgs ament_index_cpp)
+ament_target_dependencies(mono_processor rclcpp cv_bridge image_transport sensor_msgs std_msgs ament_index_cpp OpenCV)
 
 # Add stereo_processor executable
 add_executable(stereo_processor src/stereo_node.cpp src/stereo_processor.cpp)
-ament_target_dependencies(stereo_processor rclcpp cv_bridge image_transport sensor_msgs std_msgs ament_index_cpp)
+ament_target_dependencies(stereo_processor rclcpp cv_bridge image_transport sensor_msgs std_msgs ament_index_cpp OpenCV)
 
 # Install executable and launch/params files
 install(TARGETS
