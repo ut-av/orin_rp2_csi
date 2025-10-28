@@ -4,6 +4,7 @@
 #include "image_transport/image_transport.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/msg/compressed_image.hpp"
+#include "sensor_msgs/msg/camera_info.hpp"
 #include <cv_bridge/cv_bridge.h>
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "opencv2/opencv.hpp"
@@ -18,6 +19,7 @@ public:
 private:
   void capture_and_process();
   bool load_calibration(const std::string& filename);
+  void populate_camera_info();
   void process_mono();
   void print_help();
 
@@ -27,7 +29,9 @@ private:
   cv::Mat dist_coeffs_;
   image_transport::Publisher pub_image_raw_;
   image_transport::Publisher pub_image_rect_;
+  rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr pub_camera_info_;
   rclcpp::TimerBase::SharedPtr timer_;
   std::string display_mode_;
   std::string image_format_;
+  sensor_msgs::msg::CameraInfo camera_info_msg_;
 };

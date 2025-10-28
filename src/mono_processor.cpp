@@ -92,6 +92,11 @@ void MonoProcessor::init()
         pub_image_rect_ = it.advertise(rect_topic, 1);
         RCLCPP_INFO(this->get_logger(), "Publishing rectified images to topic: %s", rect_topic.c_str());
         
+        // Publisher for camera info
+        std::string camera_info_topic = base_topic + "/camera_info";
+        pub_camera_info_ = this->create_publisher<sensor_msgs::msg::CameraInfo>(camera_info_topic, 1);
+        RCLCPP_INFO(this->get_logger(), "Publishing camera info to topic: %s", camera_info_topic.c_str());
+        
         RCLCPP_INFO(this->get_logger(), "Image format: %s", image_format_.c_str());
     } catch (const std::bad_weak_ptr& e) {
         RCLCPP_ERROR(this->get_logger(), "bad_weak_ptr in ImageTransport: %s", e.what());
@@ -178,6 +183,8 @@ bool MonoProcessor::load_calibration(const std::string& filename)
     bool success = !camera_matrix_.empty() && !dist_coeffs_.empty();
     if (success) {
         RCLCPP_INFO(this->get_logger(), "Successfully loaded calibration from: %s", filename.c_str());
+        // Populate camera_info_msg_ with calibration parameters
+        populate_camera_info();
     }
     
     return success;
@@ -264,10 +271,67 @@ void MonoProcessor::print_help()
     std::cout << "      Calibration improves image quality when available.\n\n";
 }
 
+void MonoProcessor::populate_camera_info()
+{
+    // Set image dimensions
+    int width = this->get_parameter("width").as_int();
+    int height = this->get_parameter("height").as_int();
+    int sensor_id = this->get_parameter("sensor_id").as_int();
+    
+    camera_info_msg_.width = width;
+    camera_info_msg_.height = height;
+    camera_info_msg_.distortion_model = "plumb_bob";
+    
+    // Populate camera matrix K (3x3)
+    camera_info_msg_.k[0] = camera_matrix_.at<double>(0, 0);  // fx
+    camera_info_msg_.k[1] = camera_matrix_.at<double>(0, 1);  // 0
+    camera_info_msg_.k[2] = camera_matrix_.at<double>(0, 2);  // cx
+    camera_info_msg_.k[3] = camera_matrix_.at<double>(1, 0);  // 0
+    camera_info_msg_.k[4] = camera_matrix_.at<double>(1, 1);  // fy
+    camera_info_msg_.k[5] = camera_matrix_.at<double>(1, 2);  // cy
+    camera_info_msg_.k[6] = camera_matrix_.at<double>(2, 0);  // 0
+    camera_info_msg_.k[7] = camera_matrix_.at<double>(2, 1);  // 0
+    camera_info_msg_.k[8] = camera_matrix_.at<double>(2, 2);  // 1
+    
+    // Populate distortion coefficients D (k1, k2, p1, p2, k3)
+    camera_info_msg_.d.clear();
+    for (int i = 0; i < dist_coeffs_.cols; i++) {
+        camera_info_msg_.d.push_back(dist_coeffs_.at<double>(0, i));
+    }
+    
+    // Set R (rectification matrix) to identity (3x3)
+    camera_info_msg_.r[0] = 1.0; camera_info_msg_.r[1] = 0.0; camera_info_msg_.r[2] = 0.0;
+    camera_info_msg_.r[3] = 0.0; camera_info_msg_.r[4] = 1.0; camera_info_msg_.r[5] = 0.0;
+    camera_info_msg_.r[6] = 0.0; camera_info_msg_.r[7] = 0.0; camera_info_msg_.r[8] = 1.0;
+    
+    // Set P (projection matrix) to [K|0] (3x4)
+    camera_info_msg_.p[0] = camera_matrix_.at<double>(0, 0);   // fx
+    camera_info_msg_.p[1] = camera_matrix_.at<double>(0, 1);   // 0
+    camera_info_msg_.p[2] = camera_matrix_.at<double>(0, 2);   // cx
+    camera_info_msg_.p[3] = 0.0;                              // Tx (no baseline)
+    camera_info_msg_.p[4] = camera_matrix_.at<double>(1, 0);   // 0
+    camera_info_msg_.p[5] = camera_matrix_.at<double>(1, 1);   // fy
+    camera_info_msg_.p[6] = camera_matrix_.at<double>(1, 2);   // cy
+    camera_info_msg_.p[7] = 0.0;                              // Ty
+    camera_info_msg_.p[8] = camera_matrix_.at<double>(2, 0);   // 0
+    camera_info_msg_.p[9] = camera_matrix_.at<double>(2, 1);   // 0
+    camera_info_msg_.p[10] = camera_matrix_.at<double>(2, 2);  // 1
+    camera_info_msg_.p[11] = 0.0;                             // Tz
+    
+    RCLCPP_INFO(this->get_logger(), "Camera info populated with calibration parameters for sensor %d", sensor_id);
+}
+
 void MonoProcessor::process_mono()
 {
     cv::Mat rectified;
     bool need_rectification = false;
+    
+    // Publish camera_info
+    if (pub_camera_info_->get_subscription_count() > 0) {
+        camera_info_msg_.header.stamp = this->now();
+        camera_info_msg_.header.frame_id = "camera_frame";
+        pub_camera_info_->publish(camera_info_msg_);
+    }
     
     // Publish raw (unrectified) image if there are subscribers
     if (pub_image_raw_.getNumSubscribers() > 0) {
