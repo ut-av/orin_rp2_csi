@@ -1,0 +1,32 @@
+kind: package
+name: orin_rp2_csi
+dependencies:
+- rclcpp
+- cv_bridge
+- image_transport
+- sensor_msgs
+- std_msgs
+- ament_index_cpp
+- ament_cmake
+source_path: .
+ros_distro: jazzy
+# Custom L4T-matched base (Ubuntu 24.04 + L4T r39.2 + ROS jazzy). Required so the
+# host's Tegra GStreamer plugins load for CSI camera capture. Build it first with
+# dependencies/arm64/l4t-jazzy/build.sh.
+run:
+  build: >-
+    cd /home/orin/workspace && mkdir -p log &&
+    colcon build --packages-select orin_rp2_csi
+  # display_mode:=none keeps the node headless — airfield containers have no
+  # DISPLAY, so cv::imshow would crash ("Can't initialize GTK backend").
+  # Visualize by subscribing to the published topics from another machine.
+  mono_processor: >-
+    cd /home/orin/workspace && mkdir -p log &&
+    colcon build --packages-select orin_rp2_csi &&
+    source install/setup.bash &&
+    ros2 run orin_rp2_csi mono_processor --ros-args -p display_mode:=none
+  stereo_processor: >-
+    cd /home/orin/workspace && mkdir -p log &&
+    colcon build --packages-select orin_rp2_csi &&
+    source install/setup.bash &&
+    ros2 run orin_rp2_csi stereo_processor --ros-args -p display_mode:=none
